@@ -136,7 +136,7 @@ workflow {
 */
 
 // This is where the results will be
-println(ANSI_YELLOW + "\nPipeline Starting! \nThe files and directory for results are in a folder called " + params.outdir + "\n" + ANSI_RESET)
+println(ANSI_YELLOW + "\nPipeline Starting! \n\nThe files with results will be in a folder " + params.outdir + "\n" + ANSI_RESET)
 
 /*
 ========================================================================================
