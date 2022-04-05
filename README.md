@@ -22,7 +22,7 @@ This version of the software was run with:
 To run the pipeline do the following:
 
 ```
-nextflow run snvphyl.nf --outdir ./results -c snvphyl.config
+nextflow run snvphyl.nf --outdir ./results -c snvphyl.config --refgenome reference.fasta
 ```
 
 ### Inputs  
