@@ -30,7 +30,7 @@ ANSI_YELLOW = "\u001B[33m";
 
 // Initialize required parameters
 params.outdir = "./results"
-params.refgenome = "reference_2021JQ-00412-WAPHL-M4796-211021.fasta"
+params.refgenome = "reference.fasta"
 params.input_reads = "./FASTQs/"
 params.window_size = "11"
 params.density_threshold = "2"
@@ -57,9 +57,9 @@ println(ANSI_GREEN + """\
          =====================================================================================================================================
                                                        I N P U T   P A R A M E T E R S
          =====================================================================================================================================
-         --refgenome            Reference Genome [Default "reference_2021JQ-00412-WAPHL-M4796-211021.fasta"]    : ${params.refgenome}
+         --refgenome            Reference Genome [Default "reference.fasta"]                                    : ${params.refgenome}
          --input_reads          Input folder with reads [Default "./FASTQs/"]                                   : ${params.input_reads}
-         --outdir               Output Directory [Default "./results"]                                            : ${params.outdir}
+         --outdir               Output Directory [Default "./results"]                                          : ${params.outdir}
          --window_size          Window size for identifying high-density SNV regions [Default "11"]             : ${params.window_size}
          --density_threshold    SNV threshold for identifying high-density SNV regions [Default "2"]            : ${params.density_threshold}
          """.stripIndent()
@@ -163,7 +163,8 @@ process INDEXING {
       echo "For process INDEXING and MPILEUP: "  > Log_File.txt
       samtools --version | grep -A 1 "samtools" >> Log_File.txt
     fi
-    smalt index -k 13 -s 6 2021JQ-00412-WAPHL-M4796-211021 ${refgenome}
+    REF_BASENAME=\$(basename ${refgenome} .fasta)
+    smalt index -k 13 -s 6 \${REF_BASENAME} ${refgenome}
     samtools faidx ${refgenome}
     """
 }
@@ -193,7 +194,7 @@ process SMALT_MAP {
     //publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    tuple path(refsma), path(refsmi), path(reffai), val(sample_id), file(reads), path(logfile)
+    tuple path(reffai), path(refsma), path(refsmi), val(sample_id), file(reads), path(logfile)
 
     output:
     tuple val(sample_id), path( "${sample_id}.bam" ), path(logfile)
@@ -206,8 +207,8 @@ process SMALT_MAP {
       echo "\nFor process SMALT_MAP: "  >> ${logfile}
       smalt version | grep -B 1 "Version:" >> ${logfile}
     fi
-    REFNAME=\$(basename ${refsma} .sma)
-    smalt map -f bam -n 4 -l pe -i 1000 -j 20 -r 1 -y 0.5 -o ${sample_id}.bam \${REFNAME} ${reads.get(0)} ${reads.get(1)}
+    REF_BASENAME=\$(basename ${refsma} .sma)
+    smalt map -f bam -n 4 -l pe -i 1000 -j 20 -r 1 -y 0.5 -o ${sample_id}.bam \${REF_BASENAME} ${reads.get(0)} ${reads.get(1)}
     """
 }
 /* Create BAMs and Sort */
