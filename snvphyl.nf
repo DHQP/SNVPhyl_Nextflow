@@ -35,6 +35,43 @@ params.input_reads = "./FASTQs/"
 params.window_size = "11"
 params.density_threshold = "2"
 
+//snvphyl.nf
+
+/*
+========================================================================================
+   SNVPhyl Nextflow Workflow
+========================================================================================
+   Github   : https://git.biotech.cdc.gov/mmb/snvphyl/
+   Contact  : Jill Hagey, qpk9@cdc.gov
+
+This script was based on SNVPhyl https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5628696/
+and it has a github: https://github.com/phac-nml/snvphyl-galaxy
+
+----------------------------------------------------------------------------------------
+
+*/
+
+nextflow.enable.dsl=2
+
+// Color of text
+ANSI_RESET = "\u001B[0m"
+ANSI_RED = "\u001B[31m"
+ANSI_GREEN = "\u001B[32m"
+ANSI_YELLOW = "\u001B[33m";
+
+/*
+========================================================================================
+   Create Parameters
+========================================================================================
+*/
+
+// Initialize required parameters
+params.outdir = "./results"
+params.refgenome = "reference.fasta"
+params.input_reads = "./FASTQs/"
+params.window_size = "11"
+params.density_threshold = "2"
+
 /*
 ========================================================================================
    Printing OutPipeline Details
@@ -84,7 +121,7 @@ workflow {
     FIND_REPEATS(ref_ch)
 
     //3. smalt map process takes 2 input channels as arguments
-    SMALT_MAP(INDEXING.out.indexes.combine(reads_ch).combine(INDEXING.out.logfile))
+    SMALT_MAP(INDEXING.out.indexes.combine(reads_ch))
 
     //4. sorting and indexing bam files from smalt process takes 1 input channel as an arguments
     SORT_INDEX_BAMS(SMALT_MAP.out)
@@ -94,24 +131,28 @@ workflow {
     VERIFYING_MAP_Q(SORT_INDEX_BAMS.out.sorted_bams.collect(), GENERATE_LINE_1.out.splitText())
 
     //6. freebays variant calling process takes 2 input channels as arguments
-    FREEBAYES(SORT_INDEX_BAMS.out.sorted_bams_and_sampleID.combine(ref_ch),SORT_INDEX_BAMS.out.logfile)
+    FREEBAYES(SORT_INDEX_BAMS.out.sorted_bams_and_sampleID.combine(ref_ch))
     //7. filter freebays variant file process takes 1 input channel as an argument
     FILTER_FREEBAYES(FREEBAYES.out.vcf_files)
+    // Zip up the freebayes vcf
+    BGZIP_FREEBAYES_VCF(FILTER_FREEBAYES.out)
     //8. Convert vcf freebays variant file to bcf process takes 1 input channel as an argument
-    FREEBAYES_VCF_TO_BCF(FILTER_FREEBAYES.out)
+    FREEBAYES_VCF_TO_BCF(BGZIP_FREEBAYES_VCF.out)
 
     //9. mplileup process takes 1 input channel as argument
     MPILEUP(SORT_INDEX_BAMS.out.sorted_bams_and_sampleID.combine(ref_ch))
+    // Zip up the mpileup vcf
+    BGZIP_MPILEUP_VCF(MPILEUP.out)
     //10. mplileup variant calls takes 1 input channel as an argument
-    BCFTOOLS_CALL(MPILEUP.out, FREEBAYES.out.logfile)
+    BCFTOOLS_CALL(BGZIP_MPILEUP_VCF.out)
 
     //Joining channels of multiple outputs
     combined_ch = BCFTOOLS_CALL.out.mpileup_bcf.join(FREEBAYES_VCF_TO_BCF.out)
     //11. consolidate variant calling files process takes 2 input channels as arguments
-    CONSOLIDATE_BCFS(combined_ch, BCFTOOLS_CALL.out.logfile)
+    CONSOLIDATE_BCFS(combined_ch)
 
     // Concat filtered densities to make new invalid_postions
-    catwrap_ch = Channel.fromPath("catWrapper.py" , checkIfExists: true ) 
+    catwrap_ch = Channel.fromPath("$PWD/catWrapper.py" , checkIfExists: true ) 
     CONSOLIDATE_FILTERED_DENSITY(CONSOLIDATE_BCFS.out.filtered_densities.collect(), FIND_REPEATS.out, catwrap_ch)
 
     // Making string that looks like... this is needed for the next process
@@ -124,7 +165,7 @@ workflow {
     //14. Filter Stats
     FILTER_STATS(VCF2SNV_ALIGNMENT.out.snvTable)
     //15. Using phyml to build tree process takes 1 input channel as an argument
-    PHYML(VCF2SNV_ALIGNMENT.out.snvAlignment, CONSOLIDATE_BCFS.out.logfile)
+    PHYML(VCF2SNV_ALIGNMENT.out.snvAlignment)
     //16. Make SNVMatix.tsv
     MAKE_SNV(VCF2SNV_ALIGNMENT.out.snvAlignment)
 }
@@ -136,7 +177,7 @@ workflow {
 */
 
 // This is where the results will be
-println(ANSI_YELLOW + "\nPipeline Starting! \n\nThe files with results will be in a folder " + params.outdir + "\n" + ANSI_RESET)
+println(ANSI_YELLOW + "\nPipeline Starting! \nThe files and directory for results are in a folder called " + params.outdir + "\n" + ANSI_RESET)
 
 /*
 ========================================================================================
@@ -147,22 +188,16 @@ println(ANSI_YELLOW + "\nPipeline Starting! \n\nThe files with results will be i
 process INDEXING {
     tag {"INDEXING ${refgenome}"}
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "Log_File.txt"
+    //publishDir "${params.outdir}", mode: 'copy'
 
     input:
     path(refgenome)
 
     output:
     path '*.{sma,smi,fai}', emit: indexes
-    path("Log_File.txt"), emit: logfile
 
     script:
     """
-    if [ ! -f Log_File.txt ]
-    then
-      echo "For process INDEXING and MPILEUP: "  > Log_File.txt
-      samtools --version | grep -A 1 "samtools" >> Log_File.txt
-    fi
     REF_BASENAME=\$(basename ${refgenome} .fasta)
     smalt index -k 13 -s 6 \${REF_BASENAME} ${refgenome}
     samtools faidx ${refgenome}
@@ -190,49 +225,35 @@ process FIND_REPEATS {
 process SMALT_MAP {
     tag {"SMALT_MAP ${sample_id}"}
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "Log_File.txt"
     //publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    tuple path(reffai), path(refsma), path(refsmi), val(sample_id), file(reads), path(logfile)
+    tuple path(reffai), path(refsma), path(refsmi), val(sample_id), file(reads)
 
     output:
-    tuple val(sample_id), path( "${sample_id}.bam" ), path(logfile)
+    tuple val(sample_id), path( "${sample_id}.bam" )
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 3 ]
-    then
-      echo "\nFor process SMALT_MAP: "  >> ${logfile}
-      smalt version | grep -B 1 "Version:" >> ${logfile}
-    fi
-    REF_BASENAME=\$(basename ${refsma} .sma)
-    smalt map -f bam -n 4 -l pe -i 1000 -j 20 -r 1 -y 0.5 -o ${sample_id}.bam \${REF_BASENAME} ${reads.get(0)} ${reads.get(1)}
+    REFNAME=\$(basename ${refsma} .sma)
+    smalt map -f bam -n 4 -l pe -i 1000 -j 20 -r 1 -y 0.5 -o ${sample_id}.bam \${REFNAME} ${reads.get(0)} ${reads.get(1)}
     """
 }
 /* Create BAMs and Sort */
 process SORT_INDEX_BAMS {
     tag {"SORT_INDEX_BAMS ${sample_id}"}
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "Log_File.txt"
+    //publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    tuple val(sample_id), path(bams), path(logfile)
+    tuple val(sample_id), path(bams)
 
     output:
     tuple val(sample_id), path( "${sample_id}_sorted.bam" ), emit: sorted_bams_and_sampleID
     path( "${sample_id}_sorted.bam" ), emit: sorted_bams
-    path("Log_File.txt"), emit: logfile
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 7 ]
-    then
-      echo "\nFor process SORT_INDEX_BAMS: "  >> ${logfile}
-      samtools --version | grep -A 1 "samtools" >> ${logfile}
-    fi
     samtools sort -O bam -o ${sample_id}_sorted.bam ${bams}
     samtools index ${sample_id}_sorted.bam
     """
@@ -263,7 +284,7 @@ process GENERATE_LINE_1 {
 process VERIFYING_MAP_Q {
     tag {"SORT_INDEX_BAMS"}
 
-    //publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
     input:
      path(sorted_bams)
@@ -281,29 +302,19 @@ process VERIFYING_MAP_Q {
 process FREEBAYES {
     tag {"FREEBAYES ${sample_id}"}
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "Log_File.txt"
     //publishDir "${params.outdir}", mode: 'copy'
 
     input:
     tuple val(sample_id), path(sorted_bams), path(refgenome)
-    path(logfile)
 
     output:
     tuple val(sample_id), path( "${sample_id}_freebayes.vcf" ), emit: vcf_files
-    path("Log_File.txt"), emit: logfile
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 11 ]
-    then
-      echo "\nFor process FREEBAYES: "  >> ${logfile}
-      freebayes --version | grep "version" >> ${logfile}
-    fi
     freebayes --bam ${sorted_bams} --ploidy 1 --fasta-reference ${refgenome} --vcf ${sample_id}_freebayes.vcf 
     """
 }
-
 /* Mpileup */
 process MPILEUP {
     tag {"MPILEUP ${sample_id}"}
@@ -321,34 +332,39 @@ process MPILEUP {
     bcftools mpileup --threads 4 --fasta-ref ${refgenome} -A -B -C 0 -d 1024 -q 0 -Q 0 --output-type v -I --output ${sample_id}_mpileup.vcf ${sorted_bams}
     """
 }
+/* Zip mpileup vcf*/
+process BGZIP_MPILEUP_VCF {
+    tag {"BGZIP_MPILEUP_VCF ${sample_id}"}
+    label 'process_bgzip'
 
+    input:
+     tuple val(sample_id), path(mpileup_vcf)
+
+    output:
+     tuple val(sample_id), path("${sample_id}_mpileup.vcf.gz")
+
+    script:
+    """
+    bgzip -f ${mpileup_vcf}
+    """
+}
 /* Bcftools call  */
 process BCFTOOLS_CALL {
     tag {"BCFTOOLS_CALL ${sample_id}"}
     label 'process_bcf'
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "Log_File.txt"
     //publishDir "${params.outdir}", mode: 'copy'
 
     input:
-     tuple val(sample_id), path(mpileup_vcf)
-     path(logfile)
+     tuple val(sample_id), path(mpileup_vcf_gz)
 
     output:
      tuple val(sample_id), path("${sample_id}_mpileup.bcf"), emit: mpileup_bcf
-     path("Log_File.txt"), emit: logfile
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 14 ]
-    then
-      echo "\nFor process BCFTOOLS_CALL and FREEBAYES_VCF_TO_BCF: "  >> ${logfile}
-      bcftools --version | grep -A 1 "bcftools" >> ${logfile}
-    fi
-    bgzip -f ${mpileup_vcf}
-    bcftools index -f ${sample_id}_mpileup.vcf.gz
-    bcftools call --ploidy 1 --threads 4 --output ${sample_id}_mpileup.bcf --output-type b --consensus-caller ${sample_id}_mpileup.vcf.gz
+    bcftools index -f ${mpileup_vcf_gz}
+    bcftools call --ploidy 1 --threads 4 --output ${sample_id}_mpileup.bcf --output-type b --consensus-caller ${mpileup_vcf_gz}
     """
 }
 /* Filter freebayes vcf */
@@ -369,22 +385,37 @@ process FILTER_FREEBAYES {
     filterVcf.pl --noindels ${freebayes_vcf} -o ${sample_id}_freebayes_filtered.vcf
     """
 }
+/* Zip freebayes vcf*/
+process BGZIP_FREEBAYES_VCF {
+    tag {"BGZIP_FREEBAYES_VCF ${sample_id}"}
+    label 'process_bgzip'
+
+    input:
+     tuple val(sample_id), path(freebayes_filtered_vcf)
+
+    output:
+     tuple val(sample_id), path("${sample_id}_freebayes_filtered.vcf.gz")
+
+    script:
+    """
+    bgzip -f ${freebayes_filtered_vcf}
+    """
+}
 /* Filtered freebayes vcf to bcf */
 process FREEBAYES_VCF_TO_BCF {
     tag {"FREEBAYES_VCF_TO_BCF ${sample_id}"}
     label 'process_bcf'
 
     input:
-     tuple val(sample_id), path(freebayes_filtered_vcf)
+     tuple val(sample_id), path(freebayes_filtered_vcf_gz)
 
     output:
      tuple val(sample_id), path( "${sample_id}_freebayes_filtered.bcf" ), path( "${sample_id}_freebayes_filtered.bcf.csi" )
 
     script:
     """
-    bgzip -f ${freebayes_filtered_vcf}
-    bcftools index -f ${sample_id}_freebayes_filtered.vcf.gz
-    bcftools view --output-type b --output-file ${sample_id}_freebayes_filtered.bcf ${sample_id}_freebayes_filtered.vcf.gz
+    bcftools index -f ${freebayes_filtered_vcf_gz}
+    bcftools view --output-type b --output-file ${sample_id}_freebayes_filtered.bcf ${freebayes_filtered_vcf_gz}
     bcftools index -f ${sample_id}_freebayes_filtered.bcf
     """
 }
@@ -396,7 +427,6 @@ process CONSOLIDATE_BCFS {
 
     input:
      tuple val(sample_id), path(mpileup_bcf), path(freebayes_filtered_bcf), path(freebayes_filtered_csi)
-     path(logfile)
 
     output:
      val(sample_id), emit: sample_id
@@ -404,20 +434,9 @@ process CONSOLIDATE_BCFS {
      path( "${sample_id}_consolidated.vcf" ), emit: consolidated_vcfs
      path( "${sample_id}_consolidated.bcf.csi" ), emit: consolidated_bcf_index
      path( "${sample_id}_filtered_density.txt" ), emit: filtered_densities
-     path("Log_File.txt"), emit: logfile
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 18 ]
-    then
-      echo "\nFor process FIND_REPEATS, VERIFYING_MAP_Q, FILTER_FREEBAYES, CONSOLIDATE_BCF, VCF2SNV_ALIGNMENT and MAKE_SNV: "  >> ${logfile}
-      echo "SNVPhyl-Tools Version: 1.8.2 "  >> ${logfile}
-      echo "MUMmer Version: XXX "  >> ${logfile}
-      bcftools --version | grep -A 1 "bcftools" >> ${logfile}
-      samtools --version | grep -A 1 "samtools" >> ${logfile}
-      vcftools --version | grep "VCFtools" >> ${logfile}
-    fi
     consolidate_vcfs.pl --coverage-cutoff 10 --min-mean-mapping 30 --snv-abundance-ratio 0.75 --vcfsplit ${freebayes_filtered_bcf} --mpileup ${mpileup_bcf} --filtered-density-out ${sample_id}_filtered_density.txt --window-size ${params.window_size} --density-threshold ${params.density_threshold} -o ${sample_id}_consolidated.bcf > ${sample_id}_consolidated.vcf
     bcftools index -f ${sample_id}_consolidated.bcf
     """
@@ -510,24 +529,16 @@ process PHYML {
 
     input:
      path(snvAlignment_phy)
-     path(logfile)
 
     output:
      path 'phylogeneticTree.newick', emit: phylogeneticTree
      path 'phylogeneticTreeStats.txt', emit: phylogeneticTreeStats
-     path("Log_File.txt"), emit: logfile
 
     script:
     """
-    line_count=\$(cat ${logfile} | wc -l)
-    if [ \$line_count == 27 ]
-    then
-      echo "\nFor process PHYML: "  >> ${logfile}
-      phyml -v | grep "PhyML v" >> ${logfile}
-    fi
     phyml -i ${snvAlignment_phy} --datatype nt --model GTR -v 0.0 -s BEST --ts/tv e --nclasses 4 --alpha e --bootstrap -4 --quiet
-    mv snvAlignment.phy_phyml_stats phylogeneticTreeStats.txt
-    mv snvAlignment.phy_phyml_tree phylogeneticTree.newick
+    mv snvAlignment.phy_phyml_stats.txt phylogeneticTreeStats.txt
+    mv snvAlignment.phy_phyml_tree.txt phylogeneticTree.newick
     """
 }
 /* Making SNV matrix */
