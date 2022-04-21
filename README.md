@@ -11,11 +11,22 @@ This Nextflow version of SNVPhyl is based on the original SNVPhyl pipeline writt
 
 ![SNVPhyl DAG](https://github.com/DHQP/SNVPhyl_Nextflow/blob/main/SNVPhyl_DAG.png)
 
-## Dependencies
+## Install and Dependencies
 
 This version of the software was run with:
 - `Nextflow version 21.04.3 build 5560 created 21-07-2021 15:09 UTC (11:09 EDT)`  
 - `singularity-ce version 3.8.0`  
+
+Once you have nextflow and singularity installed then get this repo with either:
+
+`git clone https://github.com/DHQP/SNVPhyl_Nextflow.git`
+
+or 
+
+```
+wget https://github.com/DHQP/SNVPhyl_Nextflow/releases/download/1.0.0/SNVPhyl_Nextflow.tar.gz
+tar -xvzf SNVPhyl_Nextflow.tar.gz
+```
 
 ## Running Pipeline
 
@@ -24,6 +35,8 @@ To run the pipeline do the following:
 ```
 nextflow run snvphyl.nf --outdir ./results -c snvphyl.config --refgenome reference.fasta
 ```
+
+**Make sure to pick an appropriate reference fasta file for your samples!** The one included in this repository is just for example purposes. 
 
 ### Inputs  
 
