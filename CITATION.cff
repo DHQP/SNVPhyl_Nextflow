@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Jill"
+  given-names: "Hagey"
+  orcid: "https://orcid.org/0000-0002-1308-3429"
+title: "SNVPhyl_Nextflow"
+version: 1.0.0
+doi: 
+date-released: 2022-21-4
+url: "https://github.com/DHQP/SNVPhyl_Nextflow/"
