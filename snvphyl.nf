@@ -35,43 +35,6 @@ params.input_reads = "./FASTQs/"
 params.window_size = "11"
 params.density_threshold = "2"
 
-//snvphyl.nf
-
-/*
-========================================================================================
-   SNVPhyl Nextflow Workflow
-========================================================================================
-   Github   : https://git.biotech.cdc.gov/mmb/snvphyl/
-   Contact  : Jill Hagey, qpk9@cdc.gov
-
-This script was based on SNVPhyl https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5628696/
-and it has a github: https://github.com/phac-nml/snvphyl-galaxy
-
-----------------------------------------------------------------------------------------
-
-*/
-
-nextflow.enable.dsl=2
-
-// Color of text
-ANSI_RESET = "\u001B[0m"
-ANSI_RED = "\u001B[31m"
-ANSI_GREEN = "\u001B[32m"
-ANSI_YELLOW = "\u001B[33m";
-
-/*
-========================================================================================
-   Create Parameters
-========================================================================================
-*/
-
-// Initialize required parameters
-params.outdir = "./results"
-params.refgenome = "reference.fasta"
-params.input_reads = "./FASTQs/"
-params.window_size = "11"
-params.density_threshold = "2"
-
 /*
 ========================================================================================
    Printing OutPipeline Details
