@@ -464,9 +464,13 @@ process VCF2SNV_ALIGNMENT {
     vcf2snv_alignment.pl --reference reference --invalid-pos ${new_invalid_positions} --format fasta --format phylip --numcpus 4 --output-base snvalign --fasta ${refgenome} ${consolidate_bcfs} 
     mv snvalign-positions.tsv snvTable.tsv
     mv snvalign-stats.csv vcf2core.tsv
-    mv snvalign.phy snvAlignment.phy
-    sed -i "s/'//" snvAlignment.phy
-    sed -i "s/'//" snvAlignment.phy
+    if [[ -f snvalign.phy ]]; then
+        mv snvalign.phy snvAlignment.phy
+        sed -i "s/'//" snvAlignment.phy
+        sed -i "s/'//" snvAlignment.phy
+    else
+        touch snvAlignment.phy
+    fi    
     """
 }
 /* Filter Stats */
