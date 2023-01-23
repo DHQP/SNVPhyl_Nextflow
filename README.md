@@ -1,108 +1,92 @@
-# SNVPhyl_Nextflow
+# ![nf-core/snvphyl](docs/images/nf-core-snvphyl_logo_light.png#gh-light-mode-only) ![nf-core/snvphyl](docs/images/nf-core-snvphyl_logo_dark.png#gh-dark-mode-only)
 
-This Nextflow version of SNVPhyl is based on the original SNVPhyl pipeline written by Aaron Petkau. For documentation on the pipeline and how it works see the following links. 
+[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/snvphyl/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 
-- [Galaxy Script](https://github.com/phac-nml/snvphyl-galaxy/blob/development/docs/workflows/SNVPhyl/1.0.1/snvphyl-workflow-1.0.1.ga)
-- [Workflow Image](https://snvphyl.readthedocs.io/en/latest/images/snvphyl-overview-galaxy.png)
-- [SNVPhyl Paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5628696/)
-- [SNVPhyl Documenation](https://phac-nml.github.io/irida-documentation/administrator/galaxy/pipelines/phylogenomics/)
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
+[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
+[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
+[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/nf-core/snvphyl)
 
-## Workflow
+[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23snvphyl-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/snvphyl)[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
-![SNVPhyl DAG](https://github.com/DHQP/SNVPhyl_Nextflow/blob/main/SNVPhyl_DAG.png)
+## Introduction
 
-## Install and Dependencies
+<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 
-This version of the software was run with:
-- `Nextflow version 21.04.3 build 5560 created 21-07-2021 15:09 UTC (11:09 EDT)`  
-- `singularity-ce version 3.8.0`  
+**nf-core/snvphyl** is a bioinformatics best-practice analysis pipeline for nf-core version of snvphyl.
 
-Once you have nextflow and singularity installed then get this repo with either:
+The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
 
-`git clone https://github.com/DHQP/SNVPhyl_Nextflow.git`
+<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
 
-or 
+On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/snvphyl/results).
 
-```
-wget https://github.com/DHQP/SNVPhyl_Nextflow/releases/download/1.0.0/SNVPhyl_Nextflow.tar.gz
-tar -xvzf SNVPhyl_Nextflow.tar.gz
-```
+## Pipeline summary
 
-## Running Pipeline
+<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-To run the pipeline do the following:
+1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
-```
-nextflow run snvphyl.nf --outdir ./results -c snvphyl.config --refgenome reference.fasta
-```
+## Quick Start
 
-**Make sure to pick an appropriate reference fasta file for your samples!** The one included in this repository is just for example purposes. 
+1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)
 
-### Inputs  
+2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) (you can follow [this tutorial](https://singularity-tutorial.github.io/01-installation/)), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(you can use [`Conda`](https://conda.io/miniconda.html) both to install Nextflow itself and also to manage software within pipelines. Please only use it within pipelines as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_.
 
-```
-==============================================================================================================================
-                                              I N P U T   P A R A M E T E R S
-==============================================================================================================================
---refgenome            Reference Genome [Default "reference.fasta"]                                    : reference.fasta
---input_reads          Input folder with reads [Default "./FASTQs/"]                                   : ./FASTQs/
---outdir               Output Directory [Default "./results"]                                          : ./test
---window_size          Window size for identifying high-density SNV regions [Default "11"]             : 11
---density_threshold    SNV threshold for identifying high-density SNV regions [Default "2"]            : 2
+3. Download the pipeline and test it on a minimal dataset with a single command:
 
-```  
+   ```bash
+   nextflow run nf-core/snvphyl -profile test,YOURPROFILE --outdir <OUTDIR>
+   ```
 
-The config file is currently run locally with containers using Singularity. Alternatively you can adjust the config file to run with a [different executors](https://www.nextflow.io/docs/latest/executor.html) or [Docker](https://www.nextflow.io/docs/latest/docker.html). 
+   Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
 
-Prior to running you will need to change the `singularity.cacheDir = '$PATH/Singularity_Containers'` in [line 25](https://github.com/DHQP/SNVPhyl_Nextflow/blob/d400b20b4c147f11b3c1f456fcef83215bf16b56/snvphyl.config#L25) of the config file to the location of your singularity cache directory. 
+   > - The pipeline comes with config profiles called `docker`, `singularity`, `podman`, `shifter`, `charliecloud` and `conda` which instruct the pipeline to use the named tool for software management. For example, `-profile test,docker`.
+   > - Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
+   > - If you are using `singularity`, please use the [`nf-core download`](https://nf-co.re/tools/#downloading-pipelines-for-offline-use) command to download images first, before running the pipeline. Setting the [`NXF_SINGULARITY_CACHEDIR` or `singularity.cacheDir`](https://www.nextflow.io/docs/latest/singularity.html?#singularity-docker-hub) Nextflow options enables you to store and re-use the images from a central location for future pipeline runs.
+   > - If you are using `conda`, it is highly recommended to use the [`NXF_CONDA_CACHEDIR` or `conda.cacheDir`](https://www.nextflow.io/docs/latest/conda.html) settings to store the environments in a central location for future pipeline runs.
 
-### Output  
+4. Start running your own analysis!
 
-The following files will be output by SNVPhyl and are explained in the [original SNVPhyl Documentation](https://snvphyl.readthedocs.io/en/latest/user/output/).
-1. filterStats.txt   
-2. phylogeneticTree.newick    
-3. phylogeneticTreeStats.txt
-5. snvAlignment.phy  
-6. snvTable.tsv
-7. snvMatrix.tsv    
-8. vcf2core.tsv
+   <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
-Additionally, two other files are created by this workflow. 
+   ```bash
+   nextflow run nf-core/snvphyl --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
+   ```
 
-10. Log_File.txt -- Contains information on the software versions used for this run.
-11. report.html  -- This is the nextflow report that will tell you the CPU usage, time to run each job and RAM requirements. 
+## Documentation
 
+The nf-core/snvphyl pipeline comes with documentation about the pipeline [usage](https://nf-co.re/snvphyl/usage), [parameters](https://nf-co.re/snvphyl/parameters) and [output](https://nf-co.re/snvphyl/output).
 
----
-## Notices and Disclaimers
+## Credits
 
-### Public Domain
-This repository constitutes a work of the United States Government and is not subject to domestic copyright protection under 17 USC § 105. This repository is in the public domain within the United States, and copyright and related rights in the work worldwide are waived through the [CC0 1.0 Universal public domain dedication](https://creativecommons.org/publicdomain/zero/1.0/). All contributions to this repository will be released under the CC0 dedication. By submitting a pull request you are agreeing to comply with this waiver of
-copyright interest.
+nf-core/snvphyl was originally written by Jill Hagey.
 
-### License
+We thank the following people for their extensive assistance in the development of this pipeline:
 
-Unless otherwise specified, the repository utilizes code licensed under the terms of the Apache Software License and therefore is licensed under ASL v2 or later.
+<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
-This source code in this repository is free: you can redistribute it and/or modify it under the terms of the Apache Software License version 2, or (at your option) any later version.
+## Contributions and Support
 
-This source code in this repository is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the Apache Software License for more details.
+If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-You should have received a copy of the Apache Software License along with this program. If not, see http://www.apache.org/licenses/LICENSE-2.0.html
+For further information or help, don't hesitate to get in touch on the [Slack `#snvphyl` channel](https://nfcore.slack.com/channels/snvphyl) (you can join with [this invite](https://nf-co.re/join/slack)).
 
-Any source code forked from other open source projects will inherit its license.
+## Citations
 
-### Privacy
+<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
+<!-- If you use  nf-core/snvphyl for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-This repository contains only non-sensitive, publicly available data and information. All material and community participation is covered by the [Disclaimer](https://github.com/CDCgov/template/blob/master/DISCLAIMER.md) and [Code of Conduct](https://github.com/CDCgov/template/blob/master/code-of-conduct.md). For more information about CDC's privacy policy, please visit [http://www.cdc.gov/other/privacy.html](https://www.cdc.gov/other/privacy.html).
+<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-### Contributing
+An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
-Anyone is encouraged to contribute to the repository by [forking](https://help.github.com/articles/fork-a-repo) and submitting a pull request. (If you are new to GitHub, you might start with a [basic tutorial](https://help.github.com/articles/set-up-git)). By contributing to this project, you grant a world-wide, royalty-free, perpetual, irrevocable, non-exclusive, transferable license to all users under the terms of the [Apache Software License v2](http://www.apache.org/licenses/LICENSE-2.0.html) or later.
+You can cite the `nf-core` publication as follows:
 
-All comments, messages, pull requests, and other submissions received through CDC including this GitHub page may be subject to applicable federal law, including but not limited to the Federal Records Act, and may be archived. Learn more at [http://www.cdc.gov/other/privacy.html](http://www.cdc.gov/other/privacy.html).
-
-### Records
-
-This repository is not a source of government records, but is a copy to increase collaboration and collaborative potential. All government records will be published through the [CDC web site](http://www.cdc.gov).
-
+> **The nf-core framework for community-curated bioinformatics pipelines.**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+>
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).

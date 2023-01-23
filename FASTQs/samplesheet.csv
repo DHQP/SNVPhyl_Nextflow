@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2
+Sample1,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample1_R1.fq.gz,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample1_R2.fq.gz
+Sample2,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample2_R1.fq.gz,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample2_R2.fq.gz
+Sample3,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample3_R1.fq.gz,https://github.com/DHQP/SNVPhyl_Nextflow/tree/main/FASTQs/Sample3_R2.fq.gz
