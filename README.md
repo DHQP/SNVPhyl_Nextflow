@@ -1,4 +1,4 @@
-# ![nf-core/snvphyl](docs/images/nf-core-snvphyl_logo_light.png#gh-light-mode-only) ![nf-core/snvphyl](docs/images/nf-core-snvphyl_logo_dark.png#gh-dark-mode-only)
+## This branch is still in dev!
 
 [![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/snvphyl/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 
@@ -6,21 +6,16 @@
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/nf-core/snvphyl)
+[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/DHQPre/snvphyl)
 
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23snvphyl-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/snvphyl)[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
 ## Introduction
 
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
+Same SNVPhyl as the main branch just update to nf-core style. 
 
-**nf-core/snvphyl** is a bioinformatics best-practice analysis pipeline for nf-core version of snvphyl.
+**DHQP/snvphyl** is a bioinformatics best-practice analysis pipeline for nf-core version of snvphyl.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
-
-<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
-
-On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/snvphyl/results).
 
 ## Pipeline summary
 
@@ -38,7 +33,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
    ```bash
-   nextflow run nf-core/snvphyl -profile test,YOURPROFILE --outdir <OUTDIR>
+   nextflow run DHQP/snvphyl -profile test,YOURPROFILE --outdir <OUTDIR>
    ```
 
    Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
@@ -50,15 +45,13 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 4. Start running your own analysis!
 
-   <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
-
    ```bash
-   nextflow run nf-core/snvphyl --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
+   nextflow run DHQP/snvphyl --input samplesheet.csv --outdir <OUTDIR>  -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
    ```
 
 ## Documentation
 
-The nf-core/snvphyl pipeline comes with documentation about the pipeline [usage](https://nf-co.re/snvphyl/usage), [parameters](https://nf-co.re/snvphyl/parameters) and [output](https://nf-co.re/snvphyl/output).
+The DHQP/snvphyl pipeline comes with documentation about the pipeline [usage](https://nf-co.re/snvphyl/usage), [parameters](https://nf-co.re/snvphyl/parameters) and [output](https://nf-co.re/snvphyl/output).
 
 ## Credits
 
