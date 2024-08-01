@@ -34,6 +34,10 @@ params.refgenome = "reference.fasta"
 params.input_reads = "./FASTQs/"
 params.window_size = "11"
 params.density_threshold = "2"
+params.coverage_cutoff = "10"
+params.min_mean_mapping = "30"
+params.snv_abundance_ratio = "0.75"
+
 
 /*
 ========================================================================================
@@ -62,6 +66,10 @@ println(ANSI_GREEN + """\
          --outdir               Output Directory [Default "./results"]                                          : ${params.outdir}
          --window_size          Window size for identifying high-density SNV regions [Default "11"]             : ${params.window_size}
          --density_threshold    SNV threshold for identifying high-density SNV regions [Default "2"]            : ${params.density_threshold}
+         --min_mean_mapping     Minimum mapping quality for reads supporting a variant [Default "30"]              : ${params.min_mean_mapping}
+         --snv_abundance_ratio  Cutoff proportion of base coverage supporting a high quality
+                                variant to total coverage [Default "0.75"]                                         : ${params.snv_abundance_ratio}
+         --coverage_cutoff      Minimum coverage for calling variants [Default "10"]                               : ${params.coverage_cutoff}
          """.stripIndent()
          + ANSI_RESET)
 
@@ -400,7 +408,7 @@ process CONSOLIDATE_BCFS {
 
     script:
     """
-    consolidate_vcfs.pl --coverage-cutoff 10 --min-mean-mapping 30 --snv-abundance-ratio 0.75 --vcfsplit ${freebayes_filtered_bcf} --mpileup ${mpileup_bcf} --filtered-density-out ${sample_id}_filtered_density.txt --window-size ${params.window_size} --density-threshold ${params.density_threshold} -o ${sample_id}_consolidated.bcf > ${sample_id}_consolidated.vcf
+    consolidate_vcfs.pl --coverage-cutoff ${params.coverage_cutoff} --min-mean-mapping ${params.min_mean_mapping} --snv-abundance-ratio ${params.snv_abundance_ratio} --vcfsplit ${freebayes_filtered_bcf} --mpileup ${mpileup_bcf} --filtered-density-out ${sample_id}_filtered_density.txt --window-size ${params.window_size} --density-threshold ${params.density_threshold} -o ${sample_id}_consolidated.bcf > ${sample_id}_consolidated.vcf
     bcftools index -f ${sample_id}_consolidated.bcf
     """
 }
