@@ -1,5 +1,7 @@
 # SNVPhyl_Nextflow
 
+This Repo is no longer maintained as the original author of SNVPhyl, @apetkau, wrote and maintains a [nf-core version](https://github.com/phac-nml/snvphylnfc). Also, a [WDL version](https://github.com/Kincekara/SNVPhyl_Terra) was written by @Kincekara and is avaliable to run on [Terra.bio](https://terra.bio/).
+
 This Nextflow version of SNVPhyl is based on the original SNVPhyl pipeline written by Aaron Petkau. For documentation on the pipeline and how it works see the following links. 
 
 - [Galaxy Script](https://github.com/phac-nml/snvphyl-galaxy/blob/development/docs/workflows/SNVPhyl/1.0.1/snvphyl-workflow-1.0.1.ga)
